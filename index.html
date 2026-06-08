@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timer Intervalles</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #111;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    margin-bottom: 30px;
+}
+
+input {
+    width: 80px;
+    font-size: 1.2em;
+    text-align: center;
+    margin: 5px;
+}
+
+button {
+    font-size: 1.2em;
+    padding: 10px 20px;
+    margin: 10px;
+}
+
+#phase {
+    font-size: 2em;
+    margin-top: 30px;
+}
+
+#timer {
+    font-size: 5em;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+#serie {
+    font-size: 1.5em;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Timer Intervalles</h1>
+
+<div>
+    Travail (s)<br>
+    <input id="work" type="number" value="45">
+</div>
+
+<div>
+    Repos (s)<br>
+    <input id="rest" type="number" value="15">
+</div>
+
+<div>
+    Répétitions<br>
+    <input id="rounds" type="number" value="10">
+</div>
+
+<div>
+    <button onclick="startTimer()">Démarrer</button>
+    <button onclick="pauseTimer()">Pause</button>
+    <button onclick="stopTimer()">Stop</button>
+</div>
+
+<div id="phase">Prêt</div>
+<div id="timer">00:00</div>
+<div id="serie"></div>
+
+<script>
+
+let interval;
+let currentRound = 1;
+let totalRounds;
+let workTime;
+let restTime;
+let remaining;
+let isWork = true;
+let paused = false;
+
+function beep() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.connect(ctx.destination);
+    osc.frequency.value = 800;
+    osc.start();
+    osc.stop(ctx.currentTime + 0.15);
+}
+
+function formatTime(seconds) {
+    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const s = String(seconds % 60).padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+function updateDisplay() {
+    document.getElementById("timer").textContent = formatTime(remaining);
+    document.getElementById("phase").textContent = isWork ? "TRAVAIL" : "REPOS";
+    document.getElementById("serie").textContent =
+        `Série ${currentRound} / ${totalRounds}`;
+}
+
+function startTimer() {
+
+    clearInterval(interval);
+
+    workTime = parseInt(document.getElementById("work").value);
+    restTime = parseInt(document.getElementById("rest").value);
+    totalRounds = parseInt(document.getElementById("rounds").value);
+
+    currentRound = 1;
+    isWork = true;
+    remaining = workTime;
+
+    updateDisplay();
+
+    interval = setInterval(tick, 1000);
+}
+
+function tick() {
+
+    if (paused) return;
+
+    remaining--;
+
+    if (remaining < 0) {
+
+        beep();
+
+        if (isWork) {
+            isWork = false;
+            remaining = restTime;
+        } else {
+
+            currentRound++;
+
+            if (currentRound > totalRounds) {
+                stopTimer();
+                document.getElementById("phase").textContent = "Terminé";
+                return;
+            }
+
+            isWork = true;
+            remaining = workTime;
+        }
+    }
+
+    updateDisplay();
+}
+
+function pauseTimer() {
+    paused = !paused;
+}
+
+function stopTimer() {
+    clearInterval(interval);
+    paused = false;
+    document.getElementById("phase").textContent = "Prêt";
+    document.getElementById("timer").textContent = "00:00";
+    document.getElementById("serie").textContent = "";
+}
+
+</script>
+
+</body>
+</html>
